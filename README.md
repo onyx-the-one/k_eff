@@ -6,14 +6,14 @@ The core formula:
 ## k_eff = k_inf * P_F * P_T = eta * epsilon * p * f * P_F * P_T
 Where:
 
-'''k_eff = effective neutron multiplication factor
+```k_eff = effective neutron multiplication factor
 P_F = fast non-leakage probability
 P_T = thermal non-leakage probability
 eta = reproduction factor
 epsilon = fast fission factor
 p = resonance escape probability
 f = thermal utilization 
-'''
+```
 
 Use: This project is under the MIT license.
 Author: Onyx Nemo
