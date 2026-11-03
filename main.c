@@ -12,14 +12,14 @@
 typedef struct {
 	double eta; // reproduction factor
 	double eps; // fast fission factor
-	double p;  // resonance escape probability
+	double res_escape;  // resonance escape probability
 	double f;   // thermal utilization
 	double pf;  // fast non-leakage probability
 	double pt;  // thermal non-leakage probability
 } Factors;
 
 double k_eff(const Factors *s) {
-	return s->eta * s->eps * s->p * s->f * s->pf * s->pt;
+	return s->eta * s->eps * s->res_escape * s->f * s->pf * s->pt;
 }
 
 void print_state(double k) {
@@ -36,8 +36,8 @@ int main(void) {
 	printf(VERSION);
 	printf(" ---\n");
 
-	Factors pwr = { .eta = 1.65, .eps = 1.03, .p = 0.75, .f = 0.90, .pf = 0.98, .pt = 0.96 };
-	Factors unreflected_bare = { .eta = 1.65, .eps = 1.03, .p = 0.75, .f = 0.90, .pf = 0.60, .pt = 0.55 };
+	Factors pwr = { .eta = 1.65, .eps = 1.03, .res_escape = 0.75, .f = 0.90, .pf = 0.98, .pt = 0.96 };
+	Factors unreflected_bare = { .eta = 1.65, .eps = 1.03, .res_escape = 0.75, .f = 0.90, .pf = 0.60, .pt = 0.55 };
 
 	double k = k_eff(&pwr);
 	double k0 = k_eff(&unreflected_bare);
