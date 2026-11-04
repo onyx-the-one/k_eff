@@ -1,0 +1,8 @@
+# VVER-440/V213 core model (exemplar)
+title = VVER-440/V213
+eta = 1.65
+eps = 1.03
+res_escape = 0.75
+f = 0.90
+pf = 0.98
+pt = 0.96
