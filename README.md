@@ -16,11 +16,11 @@ f = thermal utilization
 ```
 
 ## Usage
-Compile with ```gcc -Wall -Wextra -o keff```.
-Run with ```./keff -i input.txt [-o output.txt]```
+Compile with ```gcc -Wall -Wextra -o keff```.\n
+Run with ```./keff -i input.txt [-o output.txt]```\n
 Input file is mandatory, output file may be left out. In that case results will go to stdout.
 
-Use: This project is under the MIT license.
-Author: Onyx Nemo
-Date last updated: 02/NOV/2026
+Use: This project is under the MIT license.\n
+Author: Onyx Nemo\n
+Date last updated: 02/NOV/2026\n
 
