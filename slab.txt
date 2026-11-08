@@ -1,0 +1,29 @@
+title = fuel slab with water reflector, illustrative
+
+[geometry]
+width = 100.0
+mesh = 200
+boundary = vacuum
+flux = yes
+
+[material fuel]
+d1 = 1.0
+sa1 = 0.004
+s12 = 0.04
+nusf1 = 0.002
+d2 = 0.9
+sa2 = 0.08
+nusf2 = 0.115
+
+[material water]
+d1 = 1.1
+sa1 = 0.0004
+s12 = 0.05
+nusf1 = 0.0
+d2 = 0.16
+sa2 = 0.012
+nusf2 = 0.0
+
+[layout]
+regions = water:20,fuel:60,water:20
+
