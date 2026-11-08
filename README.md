@@ -1,5 +1,5 @@
 # K_EFF
-version 0.0.1
+version 0.1.0
 ## K_EFF, pronounced like Jeff but with a K, is a tool for calculating k_eff. 
 What's k_eff? k_eff, pronounced “k-effective,” is the effective neutron multiplication factor: a dimensionless measure of whether a fission chain reaction shrinks, sustains itself, or grows in a real, finite reactor, accounting for neutron absorption and leakage. So in short, trying to balance a nuclear reactor!
 The core formula:
