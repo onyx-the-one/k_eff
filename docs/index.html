@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>keff - documentation</title>
+<style type="text/css">
+body {
+  font-family: "Times New Roman", Times, serif;
+  background: #ffffff;
+  color: #000000;
+  margin: 2em 4em;
+  line-height: 1.3;
+}
+h1 { font-size: 1.7em; }
+h2 { font-size: 1.2em; margin-top: 1.5em; }
+pre { background: #f0f0f0; padding: 0.5em; }
+table { border-collapse: collapse; }
+td, th { border: 1px solid #999999; padding: 3px 8px; text-align: left; font-size: 0.95em; }
+hr { border: 0; border-top: 1px solid #999999; }
+.small { font-size: 0.85em; color: #444444; }
+</style>
+</head>
+<body>
+
+<h1>keff</h1>
+
+<p><i>pronounced like "Jeff", but with a K</i></p>
+
+<p>keff is a small C program that computes the effective neutron multiplication
+factor k<sub>eff</sub> by solving the two-group neutron diffusion eigenvalue
+problem on a one-dimensional slab. The slab is divided into regions, each with
+its own material, so fuel/reflector sandwiches and axial stacks work. This
+page documents the mathematics it solves and how to use it.</p>
+
+<hr>
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href="#math">1. The math</a></li>
+<li><a href="#method">2. Numerical method</a></li>
+<li><a href="#input">3. Input file</a></li>
+<li><a href="#build">4. Building and running</a></li>
+<li><a href="#output">5. Output</a></li>
+<li><a href="#verify">6. Verification</a></li>
+</ul>
+
+<h2><a name="math">1. The math</a></h2>
+
+<p>k<sub>eff</sub> is the ratio of neutrons in one fission generation to
+neutrons in the previous one. If it is below 1 the chain reaction dies away
+(subcritical), if it equals 1 the reaction sustains itself (critical), and if
+it is above 1 the reaction grows (supercritical).</p>
+
+<p>The textbook way to write it is the six-factor formula,</p>
+
+<pre>k_eff = k_inf * P_F * P_T = eta * epsilon * p * f * P_F * P_T</pre>
+
+<p>where eta is the reproduction factor, epsilon the fast fission factor, p
+the resonance escape probability, f the thermal utilization, and P_F, P_T the
+fast and thermal non-leakage probabilities. keff does not ask you for these
+six numbers. Instead it solves the same eigenvalue problem from transport
+theory directly, in two energy groups:</p>
+
+<pre>D1 phi1'' - (Sa1 + S12) phi1 + (chi1/k) S = 0
+D2 phi2'' - Sa2 phi2 + S12 phi1 + (chi2/k) S = 0
+
+S = nuSf1 phi1 + nuSf2 phi2</pre>
+
+<p>phi1 and phi2 are the fast and thermal scalar fluxes, D the diffusion
+coefficients, Sa the absorption cross sections, S12 the downscatter cross
+section (group 1 to group 2), nuSf the nu-times-fission cross sections, and
+chi the fission spectrum (by default all neutrons are born fast). The
+eigenvalue k of this system is k<sub>eff</sub>.</p>
+
+<h2><a name="method">2. Numerical method</a></h2>
+
+<p>The slab is discretized with cell-centered finite differences on a uniform
+mesh. The two coupled equations are relaxed with Gauss-Seidel sweeps at fixed
+k, and k itself is found by power iteration: normalize the fission source,
+converge the flux equations, update k from the ratio of new to old source,
+and repeat until k stops moving. This is the same outer/inner iteration
+structure used by production nodal codes, just smaller.</p>
+
+<p>Two boundary conditions are available. <i>reflective</i> mirrors the flux
+at the boundary (no leakage; a homogeneous reflective slab reproduces the
+infinite-medium k exactly). <i>vacuum</i> forces zero flux at the boundary
+faces by using an antisymmetric ghost cell, which corresponds to the
+(pi/W)^2 geometric buckling of a bare slab.</p>
+
+<h2><a name="input">3. Input file</a></h2>
+
+<p>The input is a plain text file with <tt>key = value</tt> lines. Lines
+starting with # are comments. Sections are marked with brackets. All lengths
+are in cm and all cross sections in cm^-1.</p>
+
+<p>The <tt>[geometry]</tt> section:</p>
+
+<table>
+<tr><th>key</th><th>meaning</th></tr>
+<tr><td>width</td><td>slab width, cm (required)</td></tr>
+<tr><td>mesh</td><td>number of mesh cells (required)</td></tr>
+<tr><td>boundary</td><td>vacuum or reflective (default vacuum)</td></tr>
+<tr><td>flux</td><td>yes to append the flux profile to the output</td></tr>
+</table>
+
+<p>A <tt>[material name]</tt> section, one per material:</p>
+
+<table>
+<tr><th>key</th><th>meaning</th></tr>
+<tr><td>d1, d2</td><td>diffusion coefficients, fast and thermal</td></tr>
+<tr><td>sa1, sa2</td><td>absorption cross sections</td></tr>
+<tr><td>s12</td><td>downscatter cross section</td></tr>
+<tr><td>nusf1, nusf2</td><td>nu times fission cross sections</td></tr>
+<tr><td>chi1, chi2</td><td>fission spectrum, optional, defaults to 1 / 0</td></tr>
+</table>
+
+<p>The <tt>[layout]</tt> section has one key, <tt>regions</tt>, a
+comma-separated list of <tt>material:width</tt> pairs, ordered left to right.
+Example input file:</p>
+
+<pre>title = fuel slab with water reflector
+
+[geometry]
+width = 100.0
+mesh = 200
+boundary = vacuum
+flux = yes
+
+[material fuel]
+d1 = 1.0
+sa1 = 0.004
+s12 = 0.04
+nusf1 = 0.002
+d2 = 0.9
+sa2 = 0.08
+nusf2 = 0.115
+
+[material water]
+d1 = 1.1
+sa1 = 0.0004
+s12 = 0.05
+nusf1 = 0.0
+d2 = 0.16
+sa2 = 0.012
+nusf2 = 0.0
+
+[layout]
+regions = water:20,fuel:60,water:20</pre>
+
+<h2><a name="build">4. Building and running</a></h2>
+
+<pre>gcc -Wall -Wextra keff.c -o keff -lm</pre>
+
+<p>The -lm matters and must come after the source file: fmax lives in libm
+and older glibc will not find it otherwise.</p>
+
+<pre>./keff -i input.txt            # results to stdout
+./keff -i input.txt -o out.txt # results to a file</pre>
+
+<h2><a name="output">5. Output</a></h2>
+
+<pre>title = fuel slab with water reflector
+k_eff = 1.360902
+state = supercritical
+rho_pcm = +26519.33
+outer_iterations = 64</pre>
+
+<p>rho_pcm is the reactivity (k-1)/k in units of 10^-5 (pcm). With
+<tt>flux = yes</tt> a table of x, phi_fast, phi_thermal follows, each flux
+normalized to its own maximum.</p>
+
+<h2><a name="verify">6. Verification</a></h2>
+
+<p>Two analytic cases check the solver. A homogeneous reflective slab has no
+leakage, so the result must equal the infinite-medium two-group value
+1.022727 for the test constants; the solver returns 1.022727. A bare
+homogeneous slab with vacuum boundaries must equal the buckling formula
+[nusf1 + nusf2*S12/(Sa2 + D2*B^2)] / (Sa1 + S12 + D1*B^2) with B^2 = (pi/W)^2,
+which gives 0.989305 for the same constants; the solver returns 0.989306,
+the difference being the expected second-order discretization error.</p>
+
+<hr>
+
+<p class="small">keff is MIT licensed, see the LICENSE file. Written by Onyx
+Nemo. Last updated 09 NOV 2026.</p>
+
+</body>
+</html>
